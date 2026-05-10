@@ -1,0 +1,599 @@
+================================================================================
+LAB 1: Digital to Digital Conversion
+================================================================================
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Take user input
+user_input = input("Enter bits: : ")
+
+# Convert input string into list of integers
+bits = [int(b) for b in user_input.replace(" ", "")]
+
+def step(levels, h=1):
+    x = np.arange(0, len(levels)+1) * h
+    return x, np.r_[levels, levels[-1]]
+
+def nrzi(bits):
+    levels, cur = [], -1
+    for b in bits:
+        if b == 1:
+            cur *= -1
+        levels.append(cur)
+    return levels
+
+def diff_manchester(bits):
+    levels, cur = [], 1
+    for b in bits:
+        if b == 0:
+            cur *= -1
+        levels += [cur, -cur]
+        cur = -cur
+    return levels
+
+encodings = [
+    ("Unipolar NRZ", [1 if b else 0 for b in bits], 1),
+    ("Polar NRZ-L", [1 if b else -1 for b in bits], 1),
+    ("Polar NRZ-I", nrzi(bits), 1),
+    ("Polar RZ", [v for b in bits for v in ([1,0] if b else [-1,0])], 0.5),
+    ("Manchester", [v for b in bits for v in ([1,-1] if b else [-1,1])], 0.5),
+    ("Diff Manchester", diff_manchester(bits), 0.5),
+]
+
+fig, axs = plt.subplots(len(encodings), 1, figsize=(10, 12), sharex=True)
+
+for ax, (name, levels, h) in zip(axs, encodings):
+    x, y = step(levels, h)
+    ax.step(x, y, where='post')
+    ax.set_ylim(-1.5, 1.5)
+    ax.set_title(name)
+    ax.grid()
+
+plt.tight_layout()
+plt.show()
+
+
+================================================================================
+LAB 2: Analog to Digital Conversion
+================================================================================
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# User Inputs
+fm = int(input("Enter message frequency (Hz): "))
+fs = int(input("Enter continuous sampling frequency: "))
+sample_rate = int(input("Enter number of samples: "))
+levels = int(input("Enter quantization levels: "))
+
+# Time axis
+# np.linspace(start, stop, number_of_points)
+t = np.linspace(0, 1, fs)
+
+# Analog Signal
+analog = np.sin(2 * np.pi * fm * t)
+
+# Sampling
+ts = np.linspace(0, 1, sample_rate)
+samples = np.sin(2 * np.pi * fm * ts)
+
+# Quantization
+quantized = np.round((samples + 1) * (levels - 1) / 2)
+
+# Number of bits required
+bits = int(np.ceil(np.log2(levels)))
+
+# Convert Quantized Values to Binary
+binary = [format(int(q), f'0{bits}b') for q in quantized]
+
+# Display Results
+print("\nSampled Values:")
+print(samples)
+
+print("\nQuantized Values:")
+print(quantized)
+
+print("\nBinary Codes:")
+print(binary)
+
+# Plotting
+plt.figure(figsize=(10, 7))
+
+# Analog Signal
+plt.subplot(3, 1, 1)
+plt.plot(t, analog)
+plt.title("Analog Signal")
+plt.grid()
+
+# Sampled Signal
+plt.subplot(3, 1, 2)
+plt.stem(ts, samples)
+plt.title("Sampled Signal")
+plt.grid()
+
+# Quantized Signal
+plt.subplot(3, 1, 3)
+plt.step(ts, quantized, where='mid')
+plt.title("Quantized Signal")
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+
+
+# Enter message frequency (Hz): 5
+# Enter continuous sampling frequency: 1000
+# Enter number of samples: 20
+# Enter quantization levels: 8
+
+================================================================================
+LAB 3: Digital to Analog Conversion
+================================================================================
+import numpy as np
+import matplotlib.pyplot as plt
+
+# User Input
+user_input = input("Enter bits: ")
+bits = [int(b) for b in user_input.replace(" ", "")]
+
+spb = 100   # Samples per bit
+fc = 5      # Carrier frequency
+
+digital = []
+ask = []
+fsk = []
+psk = []
+time = []
+
+for i, bit in enumerate(bits):
+
+    t = np.linspace(i, i + 1, spb)
+    time.extend(t)
+
+    # Digital Signal
+    digital.extend([bit] * spb)
+
+    # ASK Modulation
+    amp = 1 if bit == 1 else 0.2
+    ask.extend(amp * np.sin(2 * np.pi * fc * t))
+
+    # FSK Modulation
+    freq = 8 if bit == 1 else 3
+    fsk.extend(np.sin(2 * np.pi * freq * t))
+
+    # PSK Modulation
+    phase = 0 if bit == 1 else np.pi
+    psk.extend(np.sin(2 * np.pi * fc * t + phase))
+
+# Plotting
+plt.figure(figsize=(10, 8))
+
+# Digital Signal
+plt.subplot(4, 1, 1)
+plt.plot(time, digital)
+plt.title("Digital Signal")
+plt.ylim(-0.5, 1.5)
+plt.grid()
+
+# ASK
+plt.subplot(4, 1, 2)
+plt.plot(time, ask)
+plt.title("ASK Modulation")
+plt.grid()
+
+# FSK
+plt.subplot(4, 1, 3)
+plt.plot(time, fsk)
+plt.title("FSK Modulation")
+plt.grid()
+
+# PSK
+plt.subplot(4, 1, 4)
+plt.plot(time, psk)
+plt.title("PSK Modulation")
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+
+# sample input: 10110010
+
+
+================================================================================
+LAB 4: Analog to Analog Conversion
+================================================================================
+import numpy as np
+import matplotlib.pyplot as plt
+
+# User Inputs
+Am = int(input("Enter message amplitude: "))
+Ac = int(input("Enter carrier amplitude: "))
+
+fm = int(input("Enter message frequency (Hz): "))
+fc = int(input("Enter carrier frequency (Hz): "))
+
+kp = int(input("Enter phase sensitivity: "))
+
+# Time axis
+t = np.linspace(0, 1, 2000)
+
+# Message and Carrier Signal
+message = Am * np.sin(2 * np.pi * fm * t)
+
+carrier = Ac * np.sin(2 * np.pi * fc * t)
+
+# AM
+am = (1 + message) * carrier
+
+# FM
+kf = 50
+fm_signal = np.sin(
+    2 * np.pi * fc * t +
+    kf * np.cumsum(message) / len(t)
+)
+
+# PM
+pm_signal = np.sin(
+    2 * np.pi * fc * t +
+    kp * message
+)
+
+# Plotting
+plt.figure(figsize=(10, 10))
+
+plt.subplot(5, 1, 1)
+plt.plot(t, message)
+plt.title("Message Signal")
+plt.grid()
+
+plt.subplot(5, 1, 2)
+plt.plot(t, carrier)
+plt.title("Carrier Signal")
+plt.grid()
+
+plt.subplot(5, 1, 3)
+plt.plot(t, am)
+plt.title("Amplitude Modulation (AM)")
+plt.grid()
+
+plt.subplot(5, 1, 4)
+plt.plot(t, fm_signal)
+plt.title("Frequency Modulation (FM)")
+plt.grid()
+
+plt.subplot(5, 1, 5)
+plt.plot(t, carrier, label="Carrier")
+plt.plot(t, pm_signal, label="PM Signal")
+plt.title("Phase Modulation (PM)")
+plt.legend()
+plt.grid()
+
+plt.xlim(0, 0.2)
+
+plt.tight_layout()
+plt.show()
+
+## Enter message amplitude: 1
+# Enter carrier amplitude: 1
+# Enter message frequency (Hz): 5
+# Enter carrier frequency (Hz): 50
+# Enter phase sensitivity: 3
+
+================================================================================
+LAB 5: VRC
+================================================================================
+
+# Sender Side
+
+# Take binary data from user
+data = input("Enter binary data: ")
+
+# Count number of 1's
+ones = data.count('1')
+
+# Generate Even Parity Bit
+parity = '0' if ones % 2 == 0 else '1'
+
+# Create codeword
+codeword = data + parity
+
+# Display transmitted data
+print("\n--- Sender Side ---")
+print("Data:", data)
+print("Parity Bit:", parity)
+print("Transmitted Codeword:", codeword)
+
+
+# Receiver Side
+
+# Take received codeword from user
+received = input("\nEnter received codeword: ")
+
+# Check parity
+if received.count('1') % 2 == 0:
+    print("No Error Detected")
+else:
+    print("Error Detected")
+
+ # Data: 1100001
+
+
+================================================================================
+LAB 6: LRC
+================================================================================
+# Number of data rows
+n = int(input("Enter number of data rows: "))
+
+data = []
+
+# Input binary rows
+for i in range(n):
+    row = input(f"Enter binary data row {i+1}: ")
+    data.append(row)
+
+lrc = ""
+
+# Generate LRC
+for col in range(len(data[0])):
+    ones = 0
+
+    for row in data:
+        if row[col] == '1':
+            ones += 1
+
+    if ones % 2 == 0:
+        lrc += '0'
+    else:
+        lrc += '1'
+
+# Display Sender Side Data
+print("\nSender Side Data Block:")
+for row in data:
+    print(row)
+
+print("Generated LRC:", lrc)
+
+# ---------------- Receiver Side ----------------
+
+print("\n--- Receiver Side ---")
+
+received = []
+
+# User inputs received codewords
+for i in range(n):
+    row = input(f"Enter received data row {i+1}: ")
+    received.append(row)
+
+received_lrc = input("Enter received LRC: ")
+
+# Add received LRC to received data
+received.append(received_lrc)
+
+# Error Checking
+error = False
+
+for col in range(len(received[0])):
+    ones = 0
+
+    for row in received:
+        if row[col] == '1':
+            ones += 1
+
+    if ones % 2 != 0:
+        error = True
+
+# Result
+print("\nReceived Block:")
+for row in received[:-1]:
+    print(row)
+
+print("Received LRC:", received_lrc)
+
+if error:
+    print("Error Detected")
+else:
+    print("No Error")
+
+# Enter number of data rows: 3
+# Enter binary data row 1: 1011
+# Enter binary data row 2: 1100
+# Enter binary data row 3: 1001
+
+
+# Enter received data row 1: 1011
+# Enter received data row 2: 1100
+# Enter received data row 3: 1001
+# Enter received LRC: 1110
+
+================================================================================
+LAB 7: CRC
+================================================================================
+def crc(data, key):
+    data = list(data)
+
+    for i in range(len(data) - len(key) + 1):
+        if data[i] == '1':
+            for j in range(len(key)):
+                if data[i+j] == key[j]:
+                    data[i+j] = '0'
+                else:
+                    data[i+j] = '1'
+
+    return ''.join(data[-(len(key)-1):])
+
+
+data = input("Enter data: ")
+key = input("Enter key: ")
+
+rem = crc(data + '0' * (len(key)-1), key)
+codeword = data + rem
+
+print("Remainder:", rem)
+print("Codeword:", codeword)
+
+received = input("Enter received codeword: ")
+
+check = crc(received, key)
+
+print("Receiver Remainder:", check)
+
+if check == '0' * (len(key)-1):
+    print("No Error Detected")
+else:
+    print("Error Detected")
+
+# Enter data: 100100
+# Enter key: 1101
+================================================================================
+LAB 8: Checksum
+================================================================================
+
+n = int(input("Enter number of data words: "))
+
+data = []
+
+for i in range(n):
+    word = input(f"Enter 8-bit binary word {i+1}: ")
+    data.append(word)
+
+sum_value = 0
+
+for word in data:
+    sum_value += int(word, 2)
+
+while sum_value > 255:
+    sum_value = (sum_value & 255) + 1
+
+checksum = bin(~sum_value & 255)[2:].zfill(8)
+
+print("\nSender Side:")
+for word in data:
+    print(word)
+
+print("Checksum:", checksum)
+
+print("\n--- Receiver Side ---")
+
+received = []
+
+for i in range(n):
+    word = input(f"Enter received 8-bit word {i+1}: ")
+    received.append(word)
+
+received_checksum = input("Enter received checksum: ")
+
+received_sum = 0
+
+for word in received:
+    received_sum += int(word, 2)
+
+received_sum += int(received_checksum, 2)
+
+while received_sum > 255:
+    received_sum = (received_sum & 255) + 1
+
+if received_sum == 255:
+    print("No Error")
+else:
+    print("Error Detected")
+
+# Enter number of data words: 3
+# Enter 8-bit binary word 1: 10011001
+# Enter 8-bit binary word 2: 11100010
+# Enter 8-bit binary word 3: 00100100
+
+
+# Enter received 8-bit word 1: 10011001
+# Enter received 8-bit word 2: 11100010
+# Enter received 8-bit word 3: 00100100
+# Enter received checksum: 10111111
+
+================================================================================
+LAB 9: Hamming Code
+================================================================================
+data = input("Enter data bits: ")
+def generate_hamming(data):
+
+    l = list(map(int, data))
+    # Data bits
+    d7 = l[0]
+    d6 = l[1]
+    d5 = l[2]
+    d3 = l[3]
+
+    # Calculate parity bits
+    p1 = d3 + d5 + d7
+    p2 = d3 + d6 + d7
+    p4 = d5 + d6 + d7
+    
+    p1 = 0 if(p1 % 2 ==0) else 1
+    p2 = 0 if(p2 % 2 ==0) else 1
+    p4 = 0 if(p4 % 2 ==0) else 1
+    
+    hamming_code = [d7 , d6 , d5 , p4 , d3, p2 , p1]
+    
+    output = ''.join(map(str , hamming_code))
+    
+    return output
+
+
+# Function to detect and correct error
+def detect_and_correct(code):
+
+    b = list(map(int, code))
+
+    # Received bits
+    d7 = b[0]
+    d6 = b[1]
+    d5 = b[2]
+    p4 = b[3]
+    d3 = b[4]
+    p2 = b[5]
+    p1 = b[6]
+
+    # Recalculate parity bits
+    c1 = p1 + d3 + d5 + d7
+    c2 = p2 + d3 + d6 + d7
+    c4 = p4 + d5 + d6 + d7
+    c1 = 0 if (c1 % 2 == 0) else 1
+    c2 = 0 if (c2 % 2 == 0) else 1
+    c4 = 0 if (c4 % 2 == 0) else 1
+    
+    # Find error position
+    error_position = c4 * 4 + c2 * 2 + c1
+
+    # Correct error if exists
+    if error_position != 0:
+
+        print("\nError Detected at Position:", error_position)
+
+        # Flip the bit
+        b[7-error_position] ^= 1
+
+        print("Corrected Code:")
+        corrected_code = ''.join(map(str , b))
+        print (corrected_code)
+
+    else:
+        print("\nNo Error Detected")
+
+    return b
+
+
+
+data = input("Enter 4-bit binary data: ")
+
+# Generate Hamming Code
+hamming_code = generate_hamming(data)
+
+print("Generated Hamming Code : " , hamming_code )
+
+
+	
+# Receive code
+received = input("\nEnter received 7-bit code: ")
+
+# Detect and Correct Error
+detect_and_correct(received)
+
+# Enter 4-bit data: 1011
