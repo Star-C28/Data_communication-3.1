@@ -275,9 +275,9 @@ plt.show()
 
 ## Enter message amplitude: 1
 # Enter carrier amplitude: 1
-# Enter message frequency (Hz): 5
-# Enter carrier frequency (Hz): 50
-# Enter phase sensitivity: 3
+# Enter message frequency (Hz): 2
+# Enter carrier frequency (Hz): 20
+# Enter phase sensitivity: 5
 
 ================================================================================
 LAB 5: VRC
