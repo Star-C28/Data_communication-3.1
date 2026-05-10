@@ -18,12 +18,18 @@ carrier = np.sin(2 * np.pi * fc * t)
 am = (1 + message) * carrier
 
 # FM Modulation
-kf = 5   # Frequency sensitivity
-fm_signal = np.sin(2 * np.pi * fc * t + kf * np.cumsum(message) / 1000)
+kf = 80
+fm_signal = np.sin(
+    2 * np.pi * fc * t +
+    kf * np.cumsum(message) / 100
+)
 
 # PM Modulation
-kp = 1   # Phase sensitivity
-pm_signal = np.sin(2 * np.pi * fc * t + kp * message)
+kp = 10
+pm_signal = np.sin(
+    2 * np.pi * fc * t +
+    kp * message
+)
 
 # Plotting
 plt.figure(figsize=(10, 8))
@@ -52,8 +58,10 @@ plt.plot(t, pm_signal)
 plt.title("Phase Modulation (PM)")
 plt.grid()
 
+# Zoom for clear view
+plt.xlim(0, 0.3)
+
 plt.tight_layout()
 plt.show()
 
-# Enter message frequency (Hz): 5
-# Enter carrier frequency (Hz): 50
+#Sample input 2 20
