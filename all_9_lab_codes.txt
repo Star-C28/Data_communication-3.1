@@ -206,70 +206,77 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # User Inputs
+Am = int(input("Enter message amplitude: "))
+Ac = int(input("Enter carrier amplitude: "))
+
 fm = int(input("Enter message frequency (Hz): "))
 fc = int(input("Enter carrier frequency (Hz): "))
 
+kp = int(input("Enter phase sensitivity: "))
+
 # Time axis
-t = np.linspace(0, 1, 1000)
+t = np.linspace(0, 1, 2000)
 
-# Message Signal
-message = np.sin(2 * np.pi * fm * t)
+# Message and Carrier Signal
+message = Am * np.sin(2 * np.pi * fm * t)
 
-# Carrier Signal
-carrier = np.sin(2 * np.pi * fc * t)
+carrier = Ac * np.sin(2 * np.pi * fc * t)
 
-# AM Modulation
+# AM
 am = (1 + message) * carrier
 
-# FM Modulation
-kf = 80
+# FM
+kf = 50
 fm_signal = np.sin(
     2 * np.pi * fc * t +
-    kf * np.cumsum(message) / 100
+    kf * np.cumsum(message) / len(t)
 )
 
-# PM Modulation
-kp = 10
+# PM
 pm_signal = np.sin(
     2 * np.pi * fc * t +
     kp * message
 )
 
 # Plotting
-plt.figure(figsize=(10, 8))
+plt.figure(figsize=(10, 10))
 
-# Message Signal
-plt.subplot(4, 1, 1)
+plt.subplot(5, 1, 1)
 plt.plot(t, message)
 plt.title("Message Signal")
 plt.grid()
 
-# AM Signal
-plt.subplot(4, 1, 2)
+plt.subplot(5, 1, 2)
+plt.plot(t, carrier)
+plt.title("Carrier Signal")
+plt.grid()
+
+plt.subplot(5, 1, 3)
 plt.plot(t, am)
 plt.title("Amplitude Modulation (AM)")
 plt.grid()
 
-# FM Signal
-plt.subplot(4, 1, 3)
+plt.subplot(5, 1, 4)
 plt.plot(t, fm_signal)
 plt.title("Frequency Modulation (FM)")
 plt.grid()
 
-# PM Signal
-plt.subplot(4, 1, 4)
-plt.plot(t, pm_signal)
+plt.subplot(5, 1, 5)
+plt.plot(t, carrier, label="Carrier")
+plt.plot(t, pm_signal, label="PM Signal")
 plt.title("Phase Modulation (PM)")
+plt.legend()
 plt.grid()
 
-# Zoom for clear view
-plt.xlim(0, 0.3)
+plt.xlim(0, 0.2)
 
 plt.tight_layout()
 plt.show()
 
-#Sample input 2 20
-#kpk
+## sample input
+## amplitude 5,5
+## frequency 2 20
+## phase 10
 
 ================================================================================
 LAB 5: VRC
@@ -502,52 +509,62 @@ else:
 ================================================================================
 LAB 9: Hamming Code
 ================================================================================
+data = input("Enter data bits: ")
+m = len(data)
+r = 0
+while 2 ** r < m + r + 1:
+    r += 1
+hamming = []
+j = 0
+# Insert parity bits
+for i in range(1, m + r + 1):
+    if i == 2 ** j:
+        hamming.append('0')
+        j += 1
+    else:
+        hamming.append(data[-1])
+        data = data[:-1]
 
-import random
-
-# User input
-data = input("Enter 4-bit data: ")
-
-# Convert to integer list
-d = list(map(int, data))
-
+hamming.reverse()
 # Calculate parity bits
-p1 = d[0] ^ d[1] ^ d[3]
-p2 = d[0] ^ d[2] ^ d[3]
-p4 = d[1] ^ d[2] ^ d[3]
+for i in range(r):
+    p = 2 ** i
+    count = 0
 
-# Generate Hamming Code
-hamming = f"{p1}{p2}{d[0]}{p4}{d[1]}{d[2]}{d[3]}"
+    for j in range(1, len(hamming) + 1):
+        if j & p and hamming[-j] == '1':
+            count += 1
 
-print("\nData:", data)
-print("Hamming Code:", hamming)
+    hamming[-p] = str(count % 2)
 
-# Receiver Side
-received = list(map(int, hamming))
+hamming_code = ''.join(hamming)
 
-# Automatically generate random error position
-error_pos = random.randint(1, 7)
+print("Generated Hamming code:", hamming_code)
+# Receiver side
+received = list(input("Enter received Hamming code: "))
+error_position = 0
+for i in range(r):
+    p = 2 ** i
+    count = 0
 
-# Introduce error
-received[error_pos - 1] ^= 1
+    for j in range(1, len(received) + 1):
+        if j & p and received[-j] == '1':
+            count += 1
 
-print("Error introduced at position:", error_pos)
-print("Received Code:", ''.join(map(str, received)))
+    if count % 2 != 0:
+        error_position += p
 
-# Error Detection
-c1 = received[0] ^ received[2] ^ received[4] ^ received[6]
-c2 = received[1] ^ received[2] ^ received[5] ^ received[6]
-c4 = received[3] ^ received[4] ^ received[5] ^ received[6]
+if error_position == 0:
+    print("No error detected.")
+    print("Accepted by receiver.")
+else:
+    print("Error detected at position:", error_position)
 
-detected_error = c4 * 4 + c2 * 2 + c1
+    index = len(received) - error_position
 
-print("Detected Error Position:", detected_error)
+    received[index] = '1' if received[index] == '0' else '0'
 
-# Error Correction
-if detected_error != 0:
-    received[detected_error - 1] ^= 1
-    print("Error Corrected")
-
-print("Corrected Code:", ''.join(map(str, received)))
+    print("Corrected Hamming code:", ''.join(received))
+    print("Accepted after correction.")
 
 # Enter 4-bit data: 1011
