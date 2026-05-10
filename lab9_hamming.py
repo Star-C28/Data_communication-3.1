@@ -1,48 +1,83 @@
-import random
+def generate_hamming(data):
 
-# User input
-data = input("Enter 4-bit data: ")
+    l = list(map(int, data))
+    # Data bits
+    d7 = l[0]
+    d6 = l[1]
+    d5 = l[2]
+    d3 = l[3]
 
-# Convert to integer list
-d = list(map(int, data))
+    # Calculate parity bits
+    p1 = d3 + d5 + d7
+    p2 = d3 + d6 + d7
+    p4 = d5 + d6 + d7
+    
+    p1 = 0 if(p1 % 2 ==0) else 1
+    p2 = 0 if(p2 % 2 ==0) else 1
+    p4 = 0 if(p4 % 2 ==0) else 1
+    
+    hamming_code = [d7 , d6 , d5 , p4 , d3, p2 , p1]
+    
+    output = ''.join(map(str , hamming_code))
+    
+    return output
 
-# Calculate parity bits
-p1 = d[0] ^ d[1] ^ d[3]
-p2 = d[0] ^ d[2] ^ d[3]
-p4 = d[1] ^ d[2] ^ d[3]
+
+# Function to detect and correct error
+def detect_and_correct(code):
+
+    b = list(map(int, code))
+
+    # Received bits
+    d7 = b[0]
+    d6 = b[1]
+    d5 = b[2]
+    p4 = b[3]
+    d3 = b[4]
+    p2 = b[5]
+    p1 = b[6]
+
+    # Recalculate parity bits
+    c1 = p1 + d3 + d5 + d7
+    c2 = p2 + d3 + d6 + d7
+    c4 = p4 + d5 + d6 + d7
+    c1 = 0 if (c1 % 2 == 0) else 1
+    c2 = 0 if (c2 % 2 == 0) else 1
+    c4 = 0 if (c4 % 2 == 0) else 1
+    
+    # Find error position
+    error_position = c4 * 4 + c2 * 2 + c1
+
+    # Correct error if exists
+    if error_position != 0:
+
+        print("\nError Detected at Position:", error_position)
+
+        # Flip the bit
+        b[7-error_position] ^= 1
+
+        print("Corrected Code:")
+        corrected_code = ''.join(map(str , b))
+        print (corrected_code)
+
+    else:
+        print("\nNo Error Detected")
+
+    return b
+
+
+
+data = input("Enter 4-bit binary data: ")
 
 # Generate Hamming Code
-hamming = f"{p1}{p2}{d[0]}{p4}{d[1]}{d[2]}{d[3]}"
+hamming_code = generate_hamming(data)
 
-print("\nData:", data)
-print("Hamming Code:", hamming)
+print("Generated Hamming Code : " , hamming_code )
 
-# Receiver Side
-received = list(map(int, hamming))
 
-# Automatically generate random error position
-error_pos = random.randint(1, 7)
+	
+# Receive code
+received = input("\nEnter received 7-bit code: ")
 
-# Introduce error
-received[error_pos - 1] ^= 1
-
-print("Error introduced at position:", error_pos)
-print("Received Code:", ''.join(map(str, received)))
-
-# Error Detection
-c1 = received[0] ^ received[2] ^ received[4] ^ received[6]
-c2 = received[1] ^ received[2] ^ received[5] ^ received[6]
-c4 = received[3] ^ received[4] ^ received[5] ^ received[6]
-
-detected_error = c4 * 4 + c2 * 2 + c1
-
-print("Detected Error Position:", detected_error)
-
-# Error Correction
-if detected_error != 0:
-    received[detected_error - 1] ^= 1
-    print("Error Corrected")
-
-print("Corrected Code:", ''.join(map(str, received)))
-
-# Enter 4-bit data: 1011
+# Detect and Correct Error
+detect_and_correct(received)
